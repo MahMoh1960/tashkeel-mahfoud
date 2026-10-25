@@ -203,8 +203,10 @@ a{color:var(--accent)}
   <div class="lbl" data-i18n="uiLang"></div>
   <select id="langSel"><option value="ar">العربية</option><option value="fr">Français</option></select>
   <div class="row" style="margin-top:14px">
+   <button id="bTest" data-i18n="testConn"></button>
    <button id="bCache" data-i18n="clearCache"></button>
   </div>
+  <div class="sub" id="testOut" style="margin-top:8px;word-break:break-word"></div>
   <div class="sub" data-i18n="costNote" style="margin-top:10px"></div>
  </div>
 </div>
@@ -307,6 +309,7 @@ ar:{
  gKey:"مفتاح Gemini API",gKeyHelp:"يُحفظ على هذا الجهاز فقط، ولا يُرسل إلا إلى generativelanguage.googleapis.com.",
  gModel:"اسم النموذج",gModelHelp:"اتركه فارغاً لاستعمال الاسم الافتراضي. إن ظهر خطأ «نموذج غير متاح» فاختر اسماً حالياً من aistudio.google.com.",
  gPriv:"تنبيه: في الطبقة المجانية قد تستعمل Google النصوص المرسلة لتحسين منتجاتها وقد يطّلع عليها مراجعون بشر؛ لا ترسل نصوصاً سرية أو شخصية.",
+ testConn:"اختبار الاتصال",testing:"جاري الاختبار…",testOk:"✓ الاتصال سليم ({m}) خلال {s} ث",
  recheck:"جودة التشكيل ناقصة، إعادة المحاولة…",
  partialNote:"بقي تشكيل ناقص في {n} مقطع (كلمات بلا تشكيل).",failedNote:"تعذّر {n} مقطع (مهلة أو خطأ مؤقت) وتُرك بلا تشكيل.",
  resumeHint:"اضغط «شكِّل النص» مجدداً للإكمال؛ المقاطع الناجحة محفوظة ولن تُعاد.",
@@ -346,6 +349,7 @@ fr:{
  gKey:"Clé API Gemini",gKeyHelp:"Stockée uniquement sur cet appareil et envoyée seulement à generativelanguage.googleapis.com.",
  gModel:"Nom du modèle",gModelHelp:"Laissez vide pour le nom par défaut. En cas d'erreur « modèle indisponible », choisissez un nom actuel sur aistudio.google.com.",
  gPriv:"Attention : avec l'offre gratuite, Google peut utiliser les textes envoyés pour améliorer ses produits, et des relecteurs humains peuvent les lire ; n'envoyez pas de texte confidentiel ou personnel.",
+ testConn:"Tester la connexion",testing:"Test en cours…",testOk:"✓ Connexion OK ({m}) en {s} s",
  recheck:"Vocalisation incomplète, nouvel essai…",
  partialNote:"Vocalisation incomplète dans {n} segment(s) (mots sans voyelles).",failedNote:"{n} segment(s) en échec (délai ou erreur temporaire), laissés sans voyelles.",
  resumeHint:"Appuyez de nouveau sur « Vocaliser » pour compléter ; les segments réussis sont conservés et ne seront pas refaits.",
@@ -577,7 +581,7 @@ async function run(){
   if(!curKey()){toast(t('noKey'));openSettings();return}
   const model=prov()+':'+curModel();
   const chunks=chunkText(stripMarks(src),prov()==='gemini'?500:900);
-  const outs=[];let bad=0,rep=0,hit=0,part=0,failed=0,err=null;
+  const outs=[];let bad=0,rep=0,hit=0,part=0,failed=0,err=null,lastSoft=null;
   S.ctrl=new AbortController();setBusy(true);
   try{
     for(let i=0;i<chunks.length;i++){
@@ -598,7 +602,7 @@ async function run(){
           else bad++;
         }catch(e){
           if(e.name==='AbortError'||!(e.timeout||e.empty||e.status>=500))throw e;
-          res=core;failed++;
+          res=core;failed++;lastSoft=e;
         }
       }
       outs.push(lead+res+trail);
@@ -616,13 +620,13 @@ async function run(){
     notes.push(t('resumeHint'));
   }
   else{
-    if(failed>0)toast(t('failedNote',{n:failed}),6000);
+    if(failed>0)toast(t('failedNote',{n:failed})+' ('+errMsg(lastSoft)+')',7000);
     else if(part>0)toast(t('partialNote',{n:part}),6000);
     else{const parts=[t('done')];if(hit)parts.push(t('cached',{n:hit}));toast(parts.join(' · '))}
   }
   if(bad+rep>0)notes.push(t('mismatch',{n:bad+rep}));
   if(part>0)notes.push(t('partialNote',{n:part}));
-  if(failed>0)notes.push(t('failedNote',{n:failed}));
+  if(failed>0)notes.push(t('failedNote',{n:failed})+' ('+errMsg(lastSoft)+')');
   if(!err&&part+failed>0)notes.push(t('resumeHint'));
   if(notes.length){const n=$('note');n.textContent=notes.join(' ');n.hidden=false}
   saveHist();
@@ -748,6 +752,18 @@ async function readPdf(f){
 }
 
 /* ---------- settings ---------- */
+async function testConn(){
+  const o=$('testOut');
+  if(!curKey()){o.textContent=t('noKey');return}
+  o.textContent=t('testing');$('bTest').disabled=true;
+  const t0=Date.now();
+  try{
+    const r=await callLLM('Reply with the single word OK.','ping',null,30);
+    o.textContent=t('testOk',{m:curModel(),s:((Date.now()-t0)/1000).toFixed(1)})+' — '+r.trim().slice(0,40);
+  }catch(e){
+    o.textContent=errMsg(e)+(e.status?' [HTTP '+e.status+']':'')+(e.empty?' ['+e.message+']':'');
+  }finally{$('bTest').disabled=false}
+}
 function syncProv(){const g=prov()==='gemini';$('prov').value=g?'gemini':'claude';$('boxGem').hidden=!g;$('boxClaude').hidden=g}
 function openSettings(){
   $('key').value=ls('tsh_key')||'';$('model').value=ls('tsh_model')||'claude-sonnet-5-5';
@@ -787,6 +803,7 @@ function init(){
   $('key').oninput=()=>ls('tsh_key',$('key').value.trim());
   $('keyEye').onclick=()=>{const k=$('key');k.type=k.type==='password'?'text':'password'};
   $('model').onchange=()=>ls('tsh_model',$('model').value);
+  $('bTest').onclick=testConn;
   $('prov').onchange=()=>{ls('tsh_prov',$('prov').value);syncProv()};
   $('gkey').oninput=()=>ls('tsh_gkey',$('gkey').value.trim());
   $('gmodel').oninput=()=>ls('tsh_gmodel',$('gmodel').value.trim());
