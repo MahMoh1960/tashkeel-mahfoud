@@ -734,7 +734,12 @@ function saveTxt(){
   const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='tashkeel.txt';
   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500);toast(t('saved'));
 }
+const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
 async function share(){
+  if(isNative()){
+    try{await window.Capacitor.registerPlugin('Share').share({text:outText()});return}
+    catch(e){if(/cancel/i.test((e&&e.message)||''))return}
+  }
   if(navigator.share){try{await navigator.share({text:outText()});return}catch(e){if(e.name==='AbortError')return}}
   copyText();
 }
@@ -822,6 +827,7 @@ function init(){
   };
   $('tabRes').onclick=()=>setView('res');$('tabCmp').onclick=()=>setView('cmp');
   $('bCopy').onclick=copyText;$('bSave').onclick=saveTxt;$('bShare').onclick=share;$('bPdf').onclick=printPdf;
+  if(isNative()){$('bSave').hidden=true;$('bPdf').hidden=true}
   $('outText').addEventListener('click',e=>{const w=e.target.closest('.w');if(w)openSheet(parseInt(w.dataset.i,10))});
   $('shClose').onclick=()=>$('sheet').hidden=true;
   $('sheet').addEventListener('click',e=>{if(e.target===$('sheet'))$('sheet').hidden=true});
