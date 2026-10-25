@@ -159,19 +159,47 @@ a{color:var(--accent)}
 <div id="setM" class="modal" hidden>
  <div class="mcard">
   <div class="mhead"><span data-i18n="settings"></span><button class="icon" id="setClose">✕</button></div>
-  <div class="lbl" data-i18n="apiKey"></div>
-  <div class="row" style="flex-wrap:nowrap">
-   <input type="password" id="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-...">
-   <button id="keyEye">👁</button>
-  </div>
-  <div class="sub" data-i18n="keyHelp" style="margin-top:4px"></div>
-  <div class="sub"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
-  <div class="lbl" data-i18n="model"></div>
-  <select id="model">
-   <option value="claude-haiku-5-5" data-i18n="mHaiku"></option>
-   <option value="claude-sonnet-5-5" data-i18n="mSonnet"></option>
-   <option value="claude-opus-5-5" data-i18n="mOpus"></option>
+  <div class="lbl" data-i18n="engine"></div>
+  <select id="prov">
+   <option value="gemini" data-i18n="pGemini"></option>
+   <option value="claude" data-i18n="pClaude"></option>
   </select>
+
+  <div id="boxGem">
+   <div class="lbl" data-i18n="gKey"></div>
+   <div class="row" style="flex-wrap:nowrap">
+    <input type="password" id="gkey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="AIza...">
+    <button id="gEye">👁</button>
+   </div>
+   <div class="sub" data-i18n="gKeyHelp" style="margin-top:4px"></div>
+   <div class="sub"><a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a></div>
+   <div class="lbl" data-i18n="gModel"></div>
+   <input type="text" id="gmodel" list="gm" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="gemini-flash-latest">
+   <datalist id="gm">
+    <option value="gemini-flash-latest"></option>
+    <option value="gemini-flash-lite-latest"></option>
+    <option value="gemini-3.8-flash"></option>
+    <option value="gemini-3.5-flash-lite"></option>
+   </datalist>
+   <div class="sub" data-i18n="gModelHelp" style="margin-top:4px"></div>
+   <div class="banner" data-i18n="gPriv" style="margin-top:8px"></div>
+  </div>
+
+  <div id="boxClaude">
+   <div class="lbl" data-i18n="apiKey"></div>
+   <div class="row" style="flex-wrap:nowrap">
+    <input type="password" id="key" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="sk-ant-...">
+    <button id="keyEye">👁</button>
+   </div>
+   <div class="sub" data-i18n="keyHelp" style="margin-top:4px"></div>
+   <div class="sub"><a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">console.anthropic.com</a></div>
+   <div class="lbl" data-i18n="model"></div>
+   <select id="model">
+    <option value="claude-haiku-5-5" data-i18n="mHaiku"></option>
+    <option value="claude-sonnet-5-5" data-i18n="mSonnet"></option>
+    <option value="claude-opus-5-5" data-i18n="mOpus"></option>
+   </select>
+  </div>
   <div class="lbl" data-i18n="uiLang"></div>
   <select id="langSel"><option value="ar">العربية</option><option value="fr">Français</option></select>
   <div class="row" style="margin-top:14px">
@@ -270,6 +298,11 @@ ar:{
  hintEdit:"اضغط على أي كلمة لتصحيح تشكيلها",
  settings:"الإعدادات",apiKey:"مفتاح Anthropic API",
  keyHelp:"يُحفظ على هذا الجهاز فقط، ولا يُرسل إلا إلى api.anthropic.com.",
+ engine:"المحرك",pGemini:"Gemini (Google) — حصة مجانية",pClaude:"Claude (Anthropic) — برصيد مدفوع",
+ gKey:"مفتاح Gemini API",gKeyHelp:"يُحفظ على هذا الجهاز فقط، ولا يُرسل إلا إلى generativelanguage.googleapis.com.",
+ gModel:"اسم النموذج",gModelHelp:"اتركه فارغاً لاستعمال الاسم الافتراضي. إن ظهر خطأ «نموذج غير متاح» فاختر اسماً حالياً من aistudio.google.com.",
+ gPriv:"تنبيه: في الطبقة المجانية قد تستعمل Google النصوص المرسلة لتحسين منتجاتها وقد يطّلع عليها مراجعون بشر؛ لا ترسل نصوصاً سرية أو شخصية.",
+ errBlocked:"لم يُرجع النموذج نصاً (حجب أو رد فارغ)",errModel:"اسم النموذج غير صحيح أو غير متاح؛ عدّله في الإعدادات",
  model:"النموذج",mHaiku:"سريع واقتصادي (Haiku)",mSonnet:"متوازن (Sonnet)",mOpus:"الأدق (Opus)",
  uiLang:"لغة الواجهة",clearCache:"مسح الذاكرة المحلية",cacheCleared:"تم مسح الذاكرة المحلية",
  costNote:"تُحسب التكلفة على حسابك لدى Anthropic. يُنصح بتحديد سقف إنفاق شهري من لوحة التحكم.",
@@ -298,6 +331,11 @@ fr:{
  hintEdit:"Touchez un mot pour corriger sa vocalisation",
  settings:"Paramètres",apiKey:"Clé API Anthropic",
  keyHelp:"Stockée uniquement sur cet appareil et envoyée seulement à api.anthropic.com.",
+ engine:"Moteur",pGemini:"Gemini (Google) — quota gratuit",pClaude:"Claude (Anthropic) — crédit payant",
+ gKey:"Clé API Gemini",gKeyHelp:"Stockée uniquement sur cet appareil et envoyée seulement à generativelanguage.googleapis.com.",
+ gModel:"Nom du modèle",gModelHelp:"Laissez vide pour le nom par défaut. En cas d'erreur « modèle indisponible », choisissez un nom actuel sur aistudio.google.com.",
+ gPriv:"Attention : avec l'offre gratuite, Google peut utiliser les textes envoyés pour améliorer ses produits, et des relecteurs humains peuvent les lire ; n'envoyez pas de texte confidentiel ou personnel.",
+ errBlocked:"Le modèle n'a renvoyé aucun texte (blocage ou réponse vide)",errModel:"Nom de modèle incorrect ou indisponible ; corrigez-le dans les paramètres",
  model:"Modèle",mHaiku:"Rapide et économique (Haiku)",mSonnet:"Équilibré (Sonnet)",mOpus:"Le plus précis (Opus)",
  uiLang:"Langue de l'interface",clearCache:"Vider la mémoire locale",cacheCleared:"Mémoire locale vidée",
  costNote:"Le coût est facturé sur votre compte Anthropic. Fixez un plafond de dépenses mensuel dans la console.",
@@ -412,24 +450,50 @@ function openHist(){
 
 /* ---------- API ---------- */
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
-async function callClaude(system,user,signal,maxTokens){
-  const key=(ls('tsh_key')||'').trim(),model=ls('tsh_model')||'claude-sonnet-5-5';
+const prov=()=>ls('tsh_prov')||(ls('tsh_key')?'claude':'gemini');
+const curKey=()=>((prov()==='gemini'?ls('tsh_gkey'):ls('tsh_key'))||'').trim();
+const curModel=()=>prov()==='gemini'?((ls('tsh_gmodel')||'').trim()||'gemini-flash-latest'):(ls('tsh_model')||'claude-sonnet-5-5');
+async function callLLM(system,user,signal,maxTokens){
+  const g=prov()==='gemini',key=curKey(),model=curModel(),mt=maxTokens||8000;
+  const req=g?{
+    url:'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',
+    headers:{'content-type':'application/json','x-goog-api-key':key},
+    body:{systemInstruction:{parts:[{text:system}]},contents:[{role:'user',parts:[{text:user}]}],generationConfig:{maxOutputTokens:mt,temperature:0}}
+  }:{
+    url:'https://api.anthropic.com/v1/messages',
+    headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:{model:model,max_tokens:mt,system:system,messages:[{role:'user',content:user}]}
+  };
+  const max=g?3:2;
   for(let a=0;;a++){
     let r;
-    try{
-      r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal:signal,
-        headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-        body:JSON.stringify({model:model,max_tokens:maxTokens||8000,system:system,messages:[{role:'user',content:user}]})});
-    }catch(e){if(e.name==='AbortError')throw e;const er=new Error('net');er.net=true;throw er}
-    if(r.ok){const j=await r.json();return (j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('')}
-    if((r.status===429||r.status>=500)&&a<2){await sleep(1500*(a+1));if(signal&&signal.aborted)throw new DOMException('Aborted','AbortError');continue}
+    try{r=await fetch(req.url,{method:'POST',signal:signal,headers:req.headers,body:JSON.stringify(req.body)})}
+    catch(e){if(e.name==='AbortError')throw e;const er=new Error('net');er.net=true;throw er}
+    if(r.ok){
+      const j=await r.json();
+      if(g){
+        const c=(j.candidates||[])[0];
+        const txt=((c&&c.content&&c.content.parts)||[]).map(p=>p.text||'').join('');
+        if(!txt.trim()){const er=new Error((c&&c.finishReason)||'EMPTY');er.empty=true;throw er}
+        return txt;
+      }
+      return (j.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    }
+    if((r.status===429||r.status>=500)&&a<max){
+      await sleep((g?4000:1500)*(a+1));
+      if(signal&&signal.aborted)throw new DOMException('Aborted','AbortError');
+      continue;
+    }
     let m='';try{const j=await r.json();m=(j.error&&j.error.message)||''}catch(e){}
     const er=new Error(m||('HTTP '+r.status));er.status=r.status;throw er;
   }
 }
 function errMsg(e){
   if(e.net)return t('errNet');
+  if(e.empty)return t('errBlocked');
   if(e.status===401||e.status===403)return t('errAuth');
+  if(e.status===400&&/api key/i.test(e.message||''))return t('errAuth');
+  if(e.status===404)return t('errModel');
   if(e.status===429)return t('errRate');
   if(/credit/i.test(e.message||''))return t('errCredit');
   return t('errGen',{m:e.message});
@@ -451,7 +515,7 @@ const clean=o=>o.replace(/<\/?text>/g,'').replace(/^```\w*\n?/,'').replace(/\n?`
 async function diacritize(core,signal){
   let last=null;
   for(let attempt=0;attempt<2;attempt++){
-    const out=clean(await callClaude(sysPrompt(attempt>0),'<text>\n'+core+'\n</text>',signal,8000));
+    const out=clean(await callLLM(sysPrompt(attempt>0),'<text>\n'+core+'\n</text>',signal,8000));
     const al=align(core,out);
     if(al&&al.mism===0)return{text:al.text,status:'ok'};
     if(!al&&normCmp(out)===normCmp(core))return{text:out,status:'ok'};
@@ -469,8 +533,8 @@ async function run(){
   if(!src.trim()){toast(t('noText'));return}
   S.src=src;S.histId=null;$('note').hidden=true;
   if(S.mode==='none'){setOutput(stripMarks(src));saveHist();toast(t('done'));return}
-  if(!(ls('tsh_key')||'').trim()){toast(t('noKey'));openSettings();return}
-  const model=ls('tsh_model')||'claude-sonnet-5-5';
+  if(!curKey()){toast(t('noKey'));openSettings();return}
+  const model=prov()+':'+curModel();
   const chunks=chunkText(stripMarks(src),900);
   const outs=[];let bad=0,rep=0,hit=0,err=null;
   S.ctrl=new AbortController();setBusy(true);
@@ -563,13 +627,13 @@ function applyWord(){
   $('sheet').hidden=true;saveHist();
 }
 async function suggest(){
-  if(!(ls('tsh_key')||'').trim()){toast(t('noKey'));return}
+  if(!curKey()){toast(t('noKey'));return}
   const cur=buildWord(SH.cl),i=SH.idx;
   const ctx=S.tokens.slice(Math.max(0,i-12),i+13).join('').trim();
   const box=$('alts');box.textContent=t('suggesting');$('shSuggest').disabled=true;
   const sys="You are an expert Arabic grammarian. Given a diacritized sentence and one target word inside it, return up to 4 alternative valid diacritizations of the TARGET WORD ONLY (different from the current one), most plausible in context first. Never change the letters; only the diacritics differ. For each, give a very short reason (max 8 words) written in "+(lang==='ar'?'Arabic':'French')+". Output ONLY a JSON array like [{\"w\":\"...\",\"why\":\"...\"}] with no other text.";
   try{
-    const out=await callClaude(sys,'Sentence: '+ctx+'\nTarget word: '+cur,null,1000);
+    const out=await callLLM(sys,'Sentence: '+ctx+'\nTarget word: '+cur,null,1000);
     const a=out.indexOf('['),b=out.lastIndexOf(']');
     let arr=JSON.parse(out.slice(a,b+1));
     arr=arr.filter(x=>x&&typeof x.w==='string'&&normCmp(x.w)===normCmp(cur)&&x.w!==cur);
@@ -625,8 +689,11 @@ async function readPdf(f){
 }
 
 /* ---------- settings ---------- */
+function syncProv(){const g=prov()==='gemini';$('prov').value=g?'gemini':'claude';$('boxGem').hidden=!g;$('boxClaude').hidden=g}
 function openSettings(){
-  $('key').value=ls('tsh_key')||'';$('model').value=ls('tsh_model')||'claude-sonnet-5-5';$('langSel').value=lang;$('setM').hidden=false;
+  $('key').value=ls('tsh_key')||'';$('model').value=ls('tsh_model')||'claude-sonnet-5-5';
+  $('gkey').value=ls('tsh_gkey')||'';$('gmodel').value=ls('tsh_gmodel')||'';
+  $('langSel').value=lang;syncProv();$('setM').hidden=false;
 }
 
 /* ---------- init ---------- */
@@ -661,6 +728,10 @@ function init(){
   $('key').oninput=()=>ls('tsh_key',$('key').value.trim());
   $('keyEye').onclick=()=>{const k=$('key');k.type=k.type==='password'?'text':'password'};
   $('model').onchange=()=>ls('tsh_model',$('model').value);
+  $('prov').onchange=()=>{ls('tsh_prov',$('prov').value);syncProv()};
+  $('gkey').oninput=()=>ls('tsh_gkey',$('gkey').value.trim());
+  $('gmodel').oninput=()=>ls('tsh_gmodel',$('gmodel').value.trim());
+  $('gEye').onclick=()=>{const k=$('gkey');k.type=k.type==='password'?'text':'password'};
   $('langSel').onchange=()=>{lang=$('langSel').value;ls('tsh_lang',lang);applyLang();renderOutput()};
   $('bCache').onclick=()=>{try{localStorage.removeItem('tsh_cache')}catch(e){}toast(t('cacheCleared'))};
   $('bHist').onclick=openHist;$('histClose').onclick=()=>$('histM').hidden=true;

@@ -1,4 +1,4 @@
-const V = 'tashkeel-v1';
+const V = 'tashkeel-v2';
 const CORE = ['./', 'index.html', 'manifest.json', 'icon.svg'];
 
 self.addEventListener('install', e => {
