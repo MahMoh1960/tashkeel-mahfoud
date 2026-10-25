@@ -180,6 +180,10 @@ a{color:var(--accent)}
     <option value="gemini-flash-lite-latest"></option>
     <option value="gemini-3.8-flash"></option>
     <option value="gemini-3.5-flash-lite"></option>
+    <option value="gemini-3.6-flash"></option>
+    <option value="gemini-3.1-flash-lite"></option>
+    <option value="gemini-2.5-flash-lite"></option>
+    <option value="gemini-2.5-flash"></option>
    </datalist>
    <div class="sub" data-i18n="gModelHelp" style="margin-top:4px"></div>
    <div class="banner" data-i18n="gPriv" style="margin-top:8px"></div>
@@ -204,6 +208,7 @@ a{color:var(--accent)}
   <select id="langSel"><option value="ar">العربية</option><option value="fr">Français</option></select>
   <div class="row" style="margin-top:14px">
    <button id="bTest" data-i18n="testConn"></button>
+   <button id="bScan" data-i18n="scanModels"></button>
    <button id="bCache" data-i18n="clearCache"></button>
   </div>
   <div class="sub" id="testOut" style="margin-top:8px;word-break:break-word"></div>
@@ -315,7 +320,8 @@ ar:{
  resumeHint:"اضغط «شكِّل النص» مجدداً للإكمال؛ المقاطع الناجحة محفوظة ولن تُعاد.",
  retrying:"الخدمة مشغولة أو بلغت الحد؛ إعادة المحاولة بعد {s} ث ({n}/{m})…",
  errTimeout:"انتهت مهلة الاتصال (90 ث)؛ أعد المحاولة أو جرّب نموذجاً أخف",
- errZero:"الحصة المجانية لهذا النموذج غير متاحة في حسابك؛ بدّل اسم النموذج (مثل gemini-flash-lite-latest) أو فعّل الفوترة في AI Studio",
+ errZero:"الحصة المجانية لهذا النموذج مستنفدة أو غير متاحة لمفتاحك. في الإعدادات اضغط «فحص النماذج» لمعرفة النموذج المقبول، أو أنشئ مفتاحاً في مشروع جديد، أو فعّل الفوترة.",
+ scanModels:"فحص النماذج",scanHint:"اضغط على سطر ✓ لاختيار ذلك النموذج:",
  errBlocked:"لم يُرجع النموذج نصاً (حجب أو رد فارغ)",errModel:"اسم النموذج غير صحيح أو غير متاح؛ عدّله في الإعدادات",
  model:"النموذج",mHaiku:"سريع واقتصادي (Haiku)",mSonnet:"متوازن (Sonnet)",mOpus:"الأدق (Opus)",
  uiLang:"لغة الواجهة",clearCache:"مسح الذاكرة المحلية",cacheCleared:"تم مسح الذاكرة المحلية",
@@ -355,7 +361,8 @@ fr:{
  resumeHint:"Appuyez de nouveau sur « Vocaliser » pour compléter ; les segments réussis sont conservés et ne seront pas refaits.",
  retrying:"Service occupé ou limite atteinte ; nouvel essai dans {s} s ({n}/{m})…",
  errTimeout:"Délai de connexion dépassé (90 s) ; réessayez ou choisissez un modèle plus léger",
- errZero:"Le quota gratuit de ce modèle n'est pas disponible sur votre compte ; changez de modèle (ex. gemini-flash-lite-latest) ou activez la facturation dans AI Studio",
+ errZero:"Le quota gratuit de ce modèle est épuisé ou indisponible pour votre clé. Dans les paramètres, touchez « Scanner les modèles », ou créez une clé dans un nouveau projet, ou activez la facturation.",
+ scanModels:"Scanner les modèles",scanHint:"Touchez une ligne ✓ pour choisir ce modèle :",
  errBlocked:"Le modèle n'a renvoyé aucun texte (blocage ou réponse vide)",errModel:"Nom de modèle incorrect ou indisponible ; corrigez-le dans les paramètres",
  model:"Modèle",mHaiku:"Rapide et économique (Haiku)",mSonnet:"Équilibré (Sonnet)",mOpus:"Le plus précis (Opus)",
  uiLang:"Langue de l'interface",clearCache:"Vider la mémoire locale",cacheCleared:"Mémoire locale vidée",
@@ -474,8 +481,8 @@ const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 const prov=()=>ls('tsh_prov')||(ls('tsh_key')?'claude':'gemini');
 const curKey=()=>((prov()==='gemini'?ls('tsh_gkey'):ls('tsh_key'))||'').trim();
 const curModel=()=>prov()==='gemini'?((ls('tsh_gmodel')||'').trim()||'gemini-flash-latest'):(ls('tsh_model')||'claude-sonnet-5-5');
-async function callLLM(system,user,signal,maxTokens){
-  const g=prov()==='gemini',key=curKey(),model=curModel(),mt=maxTokens||8000;
+async function callLLM(system,user,signal,maxTokens,opts){
+  const g=prov()==='gemini',key=curKey(),model=(opts&&opts.model)||curModel(),mt=maxTokens||8000;
   const req=g?{
     url:'https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent',
     headers:{'content-type':'application/json','x-goog-api-key':key},
@@ -485,7 +492,7 @@ async function callLLM(system,user,signal,maxTokens){
     headers:{'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:{model:model,max_tokens:mt,system:system,messages:[{role:'user',content:user}]}
   };
-  const max=g?3:2;
+  const max=(opts&&opts.noRetry)?0:(g?3:2);
   for(let a=0;;a++){
     let r;
     const ctl=new AbortController(),to=setTimeout(()=>{ctl.timedOut=true;ctl.abort()},90000);
@@ -508,7 +515,7 @@ async function callLLM(system,user,signal,maxTokens){
     }
     let m='';try{const j=await r.json();m=(j.error&&j.error.message)||''}catch(e){}
     if(g&&r.status===400&&req.body.generationConfig.thinkingConfig&&/think/i.test(m)){delete req.body.generationConfig.thinkingConfig;a--;continue}
-    if((r.status===429||r.status>=500)&&a<max&&!/limit:\s*0/.test(m)){
+    if((r.status===429||r.status>=500)&&a<max&&!QUOTA.test(m)){
       const wt=(g?4000:1500)*(a+1);
       setStatus(t('retrying',{s:Math.round(wt/1000),n:a+1,m:max}));
       await sleep(wt);
@@ -518,6 +525,7 @@ async function callLLM(system,user,signal,maxTokens){
     const er=new Error(m||('HTTP '+r.status));er.status=r.status;throw er;
   }
 }
+const QUOTA=/limit:\s*0|current quota|billing details/i;
 const shortMsg=s=>(s||'').slice(0,160);
 function setStatus(s){const e=$('progTxt');if(e)e.textContent=s}
 function errMsg(e){
@@ -527,7 +535,7 @@ function errMsg(e){
   if(e.status===401||e.status===403)return t('errAuth')+' — '+shortMsg(e.message);
   if(e.status===400&&/api key/i.test(e.message||''))return t('errAuth');
   if(e.status===404)return t('errModel')+' — '+shortMsg(e.message);
-  if(e.status===429)return /limit:\s*0/.test(e.message||'')?t('errZero'):t('errRate')+' — '+shortMsg(e.message);
+  if(e.status===429)return QUOTA.test(e.message||'')?t('errZero'):t('errRate')+' — '+shortMsg(e.message);
   if(/credit/i.test(e.message||''))return t('errCredit');
   return t('errGen',{m:e.message});
 }
@@ -764,7 +772,27 @@ async function testConn(){
     o.textContent=errMsg(e)+(e.status?' [HTTP '+e.status+']':'')+(e.empty?' ['+e.message+']':'');
   }finally{$('bTest').disabled=false}
 }
-function syncProv(){const g=prov()==='gemini';$('prov').value=g?'gemini':'claude';$('boxGem').hidden=!g;$('boxClaude').hidden=g}
+async function scanModels(){
+  const o=$('testOut');o.textContent='';
+  if(!curKey()){o.textContent=t('noKey');return}
+  $('bScan').disabled=true;
+  const hint=document.createElement('div');hint.textContent=t('scanHint');o.appendChild(hint);
+  const names=[...document.querySelectorAll('#gm option')].map(x=>x.value);
+  for(const n of names){
+    const row=document.createElement('div');row.textContent=n+' …';o.appendChild(row);
+    const t0=Date.now();
+    try{
+      await callLLM('Reply with the single word OK.','ping',null,30,{model:n,noRetry:true});
+      row.textContent='✓ '+n+' ('+((Date.now()-t0)/1000).toFixed(1)+' s)';
+      row.style.cssText='cursor:pointer;color:var(--accent);padding:4px 0';
+      row.onclick=()=>{$('gmodel').value=n;ls('tsh_gmodel',n);toast(n)};
+    }catch(e){
+      row.textContent='✗ '+n+' — '+(e.status?'HTTP '+e.status:(e.empty?e.message:errMsg(e)));
+    }
+  }
+  $('bScan').disabled=false;
+}
+function syncProv(){const g=prov()==='gemini';$('prov').value=g?'gemini':'claude';$('boxGem').hidden=!g;$('boxClaude').hidden=g;$('bScan').hidden=!g}
 function openSettings(){
   $('key').value=ls('tsh_key')||'';$('model').value=ls('tsh_model')||'claude-sonnet-5-5';
   $('gkey').value=ls('tsh_gkey')||'';$('gmodel').value=ls('tsh_gmodel')||'';
@@ -803,7 +831,7 @@ function init(){
   $('key').oninput=()=>ls('tsh_key',$('key').value.trim());
   $('keyEye').onclick=()=>{const k=$('key');k.type=k.type==='password'?'text':'password'};
   $('model').onchange=()=>ls('tsh_model',$('model').value);
-  $('bTest').onclick=testConn;
+  $('bTest').onclick=testConn;$('bScan').onclick=scanModels;
   $('prov').onchange=()=>{ls('tsh_prov',$('prov').value);syncProv()};
   $('gkey').oninput=()=>ls('tsh_gkey',$('gkey').value.trim());
   $('gmodel').oninput=()=>ls('tsh_gmodel',$('gmodel').value.trim());
